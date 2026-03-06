@@ -1,11 +1,11 @@
 from rest_framework import generics
 from .models import Category, Product, Review
-from .serializers import CategorySerializer, ProductSerializer, ReviewSerializer
+from .serializers import CategorySerializer, ProductSerializer, ReviewSerializer, ProductWithReviewsSerializer
 from django.db.models import Avg, Count
-from .serializers import ProductWithReviewsSerializer
+
 
 # CATEGORY
-class CategoryListView(generics.ListAPIView):
+class CategoryListView(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
 
     def get_queryset(self):
@@ -14,36 +14,38 @@ class CategoryListView(generics.ListAPIView):
         )
 
 
-class CategoryDetailView(generics.RetrieveAPIView):
+class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 # PRODUCT
-class ProductListView(generics.ListAPIView):
+class ProductListView(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
 
-class ProductDetailView(generics.RetrieveAPIView):
+class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
 
 # REVIEW
-class ReviewListView(generics.ListAPIView):
+class ReviewListView(generics.ListCreateAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
 
-class ReviewDetailView(generics.RetrieveAPIView):
+class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
+
+# PRODUCTS WITH REVIEWS + RATING
 class ProductReviewsView(generics.ListAPIView):
     serializer_class = ProductWithReviewsSerializer
 
     def get_queryset(self):
         return Product.objects.annotate(
             rating=Avg('review__stars')
-        )    
+        )
