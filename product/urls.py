@@ -1,4 +1,7 @@
 from django.urls import path
+from .views import UserRegisterView
+from .views import UserConfirmView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     CategoryListView,
     CategoryDetailView,
@@ -19,5 +22,9 @@ urlpatterns = [
     path('reviews/', ReviewListView.as_view()),
     path('reviews/<int:pk>/', ReviewDetailView.as_view()),
     path('products/reviews/', ProductReviewsView.as_view()),
+    path('users/register/', UserRegisterView.as_view()),
+    path('users/confirm/', UserConfirmView.as_view()),
+    path('users/login/', TokenObtainPairView.as_view()),
+    path('users/refresh/', TokenRefreshView.as_view()),
 ]
 

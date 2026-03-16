@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Category, Product, Review
+from .models import Category, Product, Review, UserConfirmation
+from django.contrib.auth.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -13,6 +14,7 @@ class CategorySerializer(serializers.ModelSerializer):
         if len(value.strip()) < 2:
             raise serializers.ValidationError("Category name must be at least 2 characters")
         return value
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,6 +30,7 @@ class ProductSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("Price must be greater than 0")
         return value
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,4 +55,32 @@ class ProductWithReviewsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'title', 'description', 'price', 'rating', 'reviews']        
+        fields = ['id', 'title', 'description', 'price', 'rating', 'reviews']
+
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["username", "password", "email"]
+        extra_kwargs = {
+            "password": {"write_only": True}
+        }
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"]
+        )
+
+        user.is_active = False
+        user.save()
+
+        UserConfirmation.objects.create(user=user)
+
+        return user
+
+
+class UserConfirmSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    code = serializers.CharField()
