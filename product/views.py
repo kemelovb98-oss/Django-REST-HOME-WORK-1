@@ -1,7 +1,17 @@
-from rest_framework import generics
-from .models import Category, Product, Review
-from .serializers import CategorySerializer, ProductSerializer, ReviewSerializer, ProductWithReviewsSerializer
+from rest_framework import generics, status
+from rest_framework.response import Response
+from django.contrib.auth.models import User
 from django.db.models import Avg, Count
+
+from .models import Category, Product, Review, UserConfirmation
+from .serializers import (
+    CategorySerializer,
+    ProductSerializer,
+    ReviewSerializer,
+    ProductWithReviewsSerializer,
+    UserRegisterSerializer,
+    UserConfirmSerializer
+)
 
 
 # CATEGORY
@@ -49,28 +59,20 @@ class ProductReviewsView(generics.ListAPIView):
         return Product.objects.annotate(
             rating=Avg('review__stars')
         )
-    
-from django.contrib.auth.models import User
-from .serializers import UserRegisterSerializer
-from rest_framework import generics
 
 
+# USER REGISTER
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = UserRegisterSerializer    
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.models import User
-from .models import UserConfirmation
-from .serializers import UserConfirmSerializer
+    serializer_class = UserRegisterSerializer
 
 
-class UserConfirmView(APIView):
+# USER CONFIRM
+class UserConfirmView(generics.GenericAPIView):
+    serializer_class = UserConfirmSerializer
 
     def post(self, request):
-        serializer = UserConfirmSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
             username = serializer.validated_data["username"]
@@ -79,7 +81,7 @@ class UserConfirmView(APIView):
             try:
                 user = User.objects.get(username=username)
                 confirmation = UserConfirmation.objects.get(user=user)
-            except:
+            except (User.DoesNotExist, UserConfirmation.DoesNotExist):
                 return Response(
                     {"error": "User not found"},
                     status=status.HTTP_404_NOT_FOUND
@@ -100,4 +102,4 @@ class UserConfirmView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
